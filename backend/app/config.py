@@ -10,7 +10,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 class Settings(BaseSettings):
     app_name: str = "Candidate Screening Platform"
     database_url: str = Field(..., alias="DATABASE_URL")
-    frontend_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    frontend_origins: str = Field("http://localhost:5173,http://127.0.0.1:5173",alias="FRONTEND_ORIGINS")
     debug: bool = False
 
     model_config = SettingsConfigDict(
