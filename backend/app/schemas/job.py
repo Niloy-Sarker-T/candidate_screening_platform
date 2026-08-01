@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.job import EmploymentType, JobStatus
+from app.schemas.pagination import PaginatedResponse
 
 
 class JobBase(BaseModel):
@@ -28,3 +29,7 @@ class JobRead(JobBase):
     application_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class JobPage(PaginatedResponse[JobRead]):
+    pass

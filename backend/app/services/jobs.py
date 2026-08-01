@@ -24,21 +24,33 @@ def list_jobs(
     db: Session,
     *,
     search: str | None = None,
+    location: str | None = None,
     status: JobStatus | None = None,
     sort: str = "newest",
-) -> list[Job]:
+    page: int = 1,
+    size: int = 10,
+) -> tuple[list[Job], int]:
     query = _job_query_with_counts()
+    count_query = select(func.count(Job.id))
 
     if search:
         pattern = f"%{search}%"
-        query = query.where(
+        search_filter = (
             Job.title.ilike(pattern)
             | Job.description.ilike(pattern)
             | Job.location.ilike(pattern)
         )
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
+
+    if location:
+        location_filter = Job.location.ilike(f"%{location}%")
+        query = query.where(location_filter)
+        count_query = count_query.where(location_filter)
 
     if status:
         query = query.where(Job.status == status)
+        count_query = count_query.where(Job.status == status)
 
     if sort == "oldest":
         query = query.order_by(Job.created_at.asc())
@@ -47,12 +59,16 @@ def list_jobs(
     else:
         query = query.order_by(Job.created_at.desc())
 
+    total = db.scalar(count_query) or 0
+    query = query.offset((page - 1) * size).limit(size)
     rows = db.execute(query).all()
-    return [attach_application_count(job, count) for job, count in rows]
+    items = [attach_application_count(job, count) for job, count in rows]
+    return items, total
 
 
-def list_open_jobs(db: Session, *, search: str | None = None) -> list[Job]:
-    return list_jobs(db, search=search, status=JobStatus.OPEN)
+def list_open_jobs(db: Session, *, search: str | None = None, location: str | None = None) -> list[Job]:
+    items, _ = list_jobs(db, search=search, location=location, status=JobStatus.OPEN, size=100)
+    return items
 
 
 def get_job(db: Session, job_id: int) -> Job:

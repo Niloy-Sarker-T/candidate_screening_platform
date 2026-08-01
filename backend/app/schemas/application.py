@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
 from app.models.application import ApplicationStatus
 from app.schemas.candidate import CandidateRead
 from app.schemas.job import JobRead
+from app.schemas.pagination import PaginatedResponse
 
 
 class ApplicationCreate(BaseModel):
@@ -32,3 +33,7 @@ class ApplicationRead(BaseModel):
 class ApplicationDetail(ApplicationRead):
     candidate: CandidateRead
     job: JobRead
+
+
+class ApplicationPage(PaginatedResponse[ApplicationDetail]):
+    pass

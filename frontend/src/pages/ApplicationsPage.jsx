@@ -2,7 +2,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useState } from "react";
 
-import { updateApplicationStatus } from "../api/applications";
+import { getApplicationsExportUrl, updateApplicationStatus } from "../api/applications";
 import { getErrorMessage } from "../api/client";
 import { fetchJob, fetchJobApplications } from "../api/jobs";
 import Alert from "../components/Alert";
@@ -43,10 +43,15 @@ export default function ApplicationsPage() {
         title={job ? `${job.title} applications` : "Applications"}
         description={job ? `${job.application_count} candidate${job.application_count === 1 ? "" : "s"} in pipeline` : ""}
         actions={
-          <Link className="btn-secondary" to="/recruiter">
-            <ArrowLeft className="h-4 w-4" />
-            Dashboard
-          </Link>
+          <>
+            <a className="btn-primary" href={getApplicationsExportUrl({ job_id: jobId })}>
+              Export CSV
+            </a>
+            <Link className="btn-secondary" to="/recruiter">
+              <ArrowLeft className="h-4 w-4" />
+              Dashboard
+            </Link>
+          </>
         }
       />
 

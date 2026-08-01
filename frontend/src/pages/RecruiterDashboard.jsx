@@ -12,23 +12,41 @@ import StatusBadge from "../components/StatusBadge";
 import { useAsync } from "../hooks/useAsync";
 
 export default function RecruiterDashboard() {
-  const [filters, setFilters] = useState({ search: "", status: "", sort: "newest" });
+  const [filters, setFilters] = useState({
+    search: "",
+    location: "",
+    status: "",
+    sort: "newest",
+    page: 1,
+    size: 10,
+  });
   const [message, setMessage] = useState("");
   const [actionError, setActionError] = useState("");
   const { data: jobs, loading, error, refetch } = useAsync(
-    () => fetchJobs({ ...filters, status: filters.status || undefined, search: filters.search || undefined }),
+    () =>
+      fetchJobs({
+        ...filters,
+        status: filters.status || undefined,
+        search: filters.search || undefined,
+        location: filters.location || undefined,
+      }),
     [filters],
   );
+  const jobItems = jobs?.items || [];
 
   const stats = {
-    total: jobs?.length || 0,
-    open: jobs?.filter((job) => job.status === "OPEN").length || 0,
-    applications: jobs?.reduce((sum, job) => sum + job.application_count, 0) || 0,
+    total: jobs?.total || 0,
+    open: jobItems.filter((job) => job.status === "OPEN").length,
+    applications: jobItems.reduce((sum, job) => sum + job.application_count, 0),
   };
 
   function updateFilter(event) {
     const { name, value } = event.target;
-    setFilters((current) => ({ ...current, [name]: value }));
+    setFilters((current) => ({ ...current, [name]: value, page: 1 }));
+  }
+
+  function changePage(nextPage) {
+    setFilters((current) => ({ ...current, page: nextPage }));
   }
 
   async function handleClose(job) {
@@ -68,12 +86,19 @@ export default function RecruiterDashboard() {
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 md:grid-cols-[1fr_180px_180px_auto]">
+        <div className="grid gap-3 md:grid-cols-[1fr_180px_160px_160px_auto]">
           <input
             className="form-field"
             name="search"
             placeholder="Search jobs"
             value={filters.search}
+            onChange={updateFilter}
+          />
+          <input
+            className="form-field"
+            name="location"
+            placeholder="Location"
+            value={filters.location}
             onChange={updateFilter}
           />
           <select className="form-field" name="status" value={filters.status} onChange={updateFilter}>
@@ -97,7 +122,7 @@ export default function RecruiterDashboard() {
       <Alert type="error">{actionError || error}</Alert>
       {loading && <Loading label="Loading jobs" />}
 
-      {!loading && jobs?.length === 0 && (
+      {!loading && jobItems.length === 0 && (
         <EmptyState
           title="No jobs found"
           message="Create the first job or adjust your filters."
@@ -105,7 +130,7 @@ export default function RecruiterDashboard() {
         />
       )}
 
-      {!loading && jobs?.length > 0 && (
+      {!loading && jobItems.length > 0 && (
         <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
@@ -119,7 +144,7 @@ export default function RecruiterDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {jobs.map((job) => (
+                {jobItems.map((job) => (
                   <tr key={job.id}>
                     <Td>
                       <div>
@@ -147,6 +172,27 @@ export default function RecruiterDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Page {jobs.page} of {Math.max(1, Math.ceil(jobs.total / jobs.size))} · {jobs.total} total jobs
+            </span>
+            <div className="flex gap-2">
+              <button
+                className="btn-secondary"
+                disabled={jobs.page <= 1}
+                onClick={() => changePage(jobs.page - 1)}
+              >
+                Previous
+              </button>
+              <button
+                className="btn-secondary"
+                disabled={jobs.page >= Math.ceil(jobs.total / jobs.size)}
+                onClick={() => changePage(jobs.page + 1)}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}

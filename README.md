@@ -20,6 +20,9 @@ Frontend:
 ## Features
 
 - Recruiter dashboard with job list, filters, search, sorting, and statistics
+- Paginated job APIs with search, location filtering, status filtering, and sorting
+- Application filtering by status, email, and job
+- CSV export for applications
 - Create, edit, and close jobs
 - View applications for a job
 - Update application status through `Applied`, `Screening`, `Interview`, `Rejected`, and `Hired`
@@ -108,15 +111,38 @@ Main endpoints:
 | --- | --- | --- |
 | `GET` | `/health` | Health check |
 | `POST` | `/jobs` | Create job |
-| `GET` | `/jobs` | List jobs with optional `search`, `status`, and `sort` |
-| `GET` | `/jobs/open` | List open jobs |
+| `GET` | `/jobs` | Paginated jobs with optional `search`, `location`, `status`, `sort`, `page`, and `size` |
+| `GET` | `/jobs/open` | List open jobs with optional `search` and `location` |
 | `GET` | `/jobs/{job_id}` | Get one job |
 | `PUT` | `/jobs/{job_id}` | Update job |
 | `PATCH` | `/jobs/{job_id}/close` | Close job |
 | `GET` | `/jobs/{job_id}/applications` | List applications for a job |
+| `GET` | `/applications` | Paginated applications with optional `status`, `email`, `job_id`, `page`, and `size` |
+| `GET` | `/applications/export` | Download filtered applications as CSV |
 | `POST` | `/applications` | Apply to a job |
 | `GET` | `/applications/{application_id}` | Track application |
 | `PATCH` | `/applications/{application_id}` | Update application status |
+
+Example paginated jobs response:
+
+```json
+{
+  "total": 86,
+  "page": 1,
+  "size": 10,
+  "items": []
+}
+```
+
+Example filters:
+
+```text
+GET /jobs?search=python&location=dhaka&page=1&size=10
+GET /jobs?status=OPEN&sort=title
+GET /applications?status=screening
+GET /applications?email=niloy@example.com
+GET /applications/export?status=Interview
+```
 
 ## Environment Variables
 
