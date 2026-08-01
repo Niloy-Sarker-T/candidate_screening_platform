@@ -1,6 +1,17 @@
 # Candidate Screening Platform
 
-A clean full-stack Candidate Screening Platform for recruiters and candidates. Recruiters can create and manage jobs, review applications, and update candidate status. Candidates can browse open roles, apply, and track their application.
+A full-stack Candidate Screening Platform for recruiters and candidates. Recruiters can create and manage jobs, review applications, export candidate data, and update screening statuses. Candidates can browse open roles, apply for jobs, and track their application status.
+
+## Live Demo
+
+Frontend: `https://candidate-screening-platform-frontend.onrender.com`
+
+Backend API: `https://candidate-screening-platform-frontend.onrender.com`
+
+
+Video demo : `https://drive.google.com/file/d/1sjGW_KzDbPF61mRRylk79wcHpoldhp5G/view?usp=sharing`
+
+
 
 ## Tech Stack
 
@@ -17,26 +28,57 @@ Frontend:
 - Axios
 - Tailwind CSS
 
-## Features
+Deployment:
+- Frontend: Render
+- Backend: Render
+- Database: Neon PostgreSQL
 
-- Recruiter dashboard with job list, filters, search, sorting, and statistics
-- Paginated job APIs with search, location filtering, status filtering, and sorting
-- Application filtering by status, email, and job
-- CSV export for applications
-- Create, edit, and close jobs
+## Core Features
+
+- Create jobs
+- Edit jobs
+- Close jobs
+- View all jobs as a recruiter
+- View open jobs as a candidate
+- Apply for jobs
+- Track application status by application ID
 - View applications for a job
-- Update application status through `Applied`, `Screening`, `Interview`, `Rejected`, and `Hired`
-- Candidate open-jobs page
-- Candidate application form with email and resume URL validation
-- Application tracking by ID
-- Empty states, loading states, success and error alerts
-- Configurable CORS for local React development
+- Update candidate application status
+- Reuse existing candidate record when applying with an existing email
+
+## Additional Features
+
+- Search jobs by title, description, or location
+- Filter jobs by location and status
+- Sort jobs by newest, oldest, or title
+- Paginated jobs API
+- Filter applications by status, email, and job ID
+- Export applications as CSV
+- Prevent duplicate job applications with `409 Conflict`
+- Dashboard statistics
+- Application count per job
+- Responsive SaaS-style UI
+- Loading states, empty states, and success/error alerts
+- Configurable CORS for local and deployed frontends
 
 ## Architecture
 
-The backend is split into models, schemas, routers, services, database configuration, config, and utilities. Routers handle HTTP concerns, services contain business logic, schemas validate request and response bodies, and models define database tables and relationships.
+The backend is organized into models, schemas, routers, services, database configuration, config, and utilities. Routers handle HTTP concerns, services contain business logic, schemas validate request and response bodies, and models define database tables and relationships.
 
-The frontend is split into API clients, reusable UI components, hooks, and pages. API access is centralized through Axios.
+The frontend is organized into API clients, reusable components, hooks, and pages. API communication is centralized through Axios.
+
+```text
+React (Vite)
+     |
+     v
+FastAPI REST API
+     |
+     v
+SQLAlchemy ORM
+     |
+     v
+PostgreSQL (Neon in production)
+```
 
 ## Folder Structure
 
@@ -47,19 +89,49 @@ backend/
     config.py
     database.py
     models/
+      application.py
+      candidate.py
+      job.py
     schemas/
+      application.py
+      candidate.py
+      job.py
+      pagination.py
     routers/
+      applications.py
+      jobs.py
     services/
+      applications.py
+      candidates.py
+      jobs.py
     utils/
+      exceptions.py
   requirements.txt
   .env.example
 
 frontend/
   src/
     api/
+      applications.js
+      client.js
+      jobs.js
     components/
+      Alert.jsx
+      EmptyState.jsx
+      JobForm.jsx
+      Loading.jsx
+      Navbar.jsx
+      PageHeader.jsx
+      StatusBadge.jsx
     hooks/
+      useAsync.js
     pages/
+      ApplicationsPage.jsx
+      ApplyPage.jsx
+      CandidateHome.jsx
+      JobEditor.jsx
+      RecruiterDashboard.jsx
+      TrackStatus.jsx
     App.jsx
     main.jsx
     styles.css
@@ -98,12 +170,17 @@ Relationships:
 - Candidate has many Applications
 - Application belongs to one Job and one Candidate
 
+Data integrity:
+- A candidate cannot apply to the same job more than once.
+- Duplicate applications return HTTP `409 Conflict`.
+
 ## API Documentation
 
 FastAPI automatically exposes interactive API documentation:
 
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- Local Swagger UI: `http://localhost:8000/docs`
+- Local ReDoc: `http://localhost:8000/redoc`
+- Production Swagger UI: `https://your-backend.onrender.com/docs`
 
 Main endpoints:
 
@@ -144,73 +221,30 @@ GET /applications?email=niloy@example.com
 GET /applications/export?status=Interview
 ```
 
-## Environment Variables
+Duplicate application response:
 
-Backend:
-
-```env
-DATABASE_URL=postgresql+psycopg2://postgres:postgres@localhost:5432/candidate_screening
-FRONTEND_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-APP_NAME=Candidate Screening Platform
-DEBUG=true
+```json
+{
+  "detail": "You have already applied for this job."
+}
 ```
+
+
+
+## Deployment
 
 Frontend:
+- Hosted on Render
+- Uses `VITE_API_URL` to connect to the deployed backend API
 
-```env
-VITE_API_URL=http://localhost:8000
-```
+Backend:
+- Hosted on Render
+- Uses FastAPI with Uvicorn
+- CORS is configured through `FRONTEND_ORIGINS`
 
-## Setup Instructions
+Database:
+- Production database is hosted on Neon PostgreSQL
+- Local PostgreSQL is only required for local development
 
-Create a PostgreSQL database:
-
-```bash
-createdb candidate_screening
-```
-
-Or create it with any PostgreSQL client and update `backend/.env`.
-
-## Running Backend
-
-```bash
-cd backend
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-uvicorn app.main:app --reload
-```
-
-The backend runs at `http://localhost:8000`.
-
-Tables are created automatically on startup for this interview-ready project. In a production system, use migrations such as Alembic.
-
-## Running Frontend
-
-```bash
-cd frontend
-npm install
-copy .env.example .env
-npm run dev
-```
-
-The frontend runs at `http://localhost:5173`.
-
-## Screenshots
-
-Add screenshots here after running the project locally:
-
-- Candidate open jobs
-- Apply form
-- Recruiter dashboard
-- Applications pipeline
-
-## Future Improvements
-
-- Add authentication and role-based access control
-- Add Alembic migrations
-- Add pagination for jobs and applications
-- Add file upload support for resumes
-- Add automated tests with pytest and React Testing Library
-- Add Docker Compose for PostgreSQL, backend, and frontend
+- Add Docker Compose for local development
+- Add recruiter notes and candidate rating
